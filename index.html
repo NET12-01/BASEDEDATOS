@@ -215,6 +215,89 @@
             margin-top: 5px;
         }
 
+        /* Sincronización */
+        .sync-bar {
+            background: linear-gradient(135deg, #fef3c7, #fffbeb);
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            border-bottom: 2px solid var(--warning);
+        }
+
+        .sync-bar .sync-message {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #92400e;
+        }
+
+        .sync-bar .sync-message i {
+            font-size: 1rem;
+            color: var(--warning);
+        }
+
+        .sync-btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 0.7rem;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .sync-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .admin-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 0.7rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .stats-badge {
+            background: var(--primary);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
         /* Stats Cards */
         .stats-grid {
             display: grid;
@@ -714,6 +797,11 @@
                 width: 100%;
                 justify-content: center;
             }
+            .sync-bar {
+                padding: 0.8rem 1rem;
+                flex-direction: column;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -746,10 +834,19 @@
             <div class="admin-controls">
                 <button id="historyBtn" class="logout-btn" style="background: rgba(211,47,47,0.2);"><i class="fas fa-history"></i> Historial</button>
                 <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
-                <div class="stats-badge" style="background: var(--primary);">
+                <div class="stats-badge">
                     <i class="fas fa-users"></i> <span id="clientCount">0</span>
                 </div>
             </div>
+        </div>
+
+        <!-- Barra de sincronización -->
+        <div id="syncBar" class="sync-bar" style="display: none;">
+            <div class="sync-message">
+                <i class="fas fa-sync-alt fa-spin"></i>
+                <span>📱 Los datos no están sincronizados. Presiona el botón para actualizar desde el servidor.</span>
+            </div>
+            <button id="syncBtn" class="sync-btn"><i class="fas fa-cloud-download-alt"></i> Sincronizar Ahora</button>
         </div>
 
         <!-- Stats Grid -->
@@ -869,6 +966,121 @@
         
         let clients = [];
         let loginHistory = [];
+        let syncNeeded = false;
+        let lastSyncTimestamp = 0;
+
+        // ============== FUNCIONES DE SINCRONIZACIÓN ==============
+        
+        function getDeviceId() {
+            let deviceId = localStorage.getItem('net12_device_id');
+            if (!deviceId) {
+                deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('net12_device_id', deviceId);
+            }
+            return deviceId;
+        }
+
+        function getDataHash(data) {
+            const str = JSON.stringify(data);
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return hash.toString();
+        }
+
+        function saveToLocal() {
+            localStorage.setItem('net12_clientes', JSON.stringify(clients));
+            const dataHash = getDataHash(clients);
+            localStorage.setItem('net12_data_hash', dataHash);
+            localStorage.setItem('net12_last_update', Date.now().toString());
+            localStorage.setItem('net12_device_id', getDeviceId());
+        }
+
+        function loadFromLocal() {
+            const stored = localStorage.getItem('net12_clientes');
+            if (stored) {
+                try {
+                    clients = JSON.parse(stored);
+                    clients = clients.map((c, idx) => ({ 
+                        ...c, 
+                        id: c.id ? c.id : idx + 1,
+                        wifiCost: c.wifiCost !== undefined && !isNaN(c.wifiCost) ? Number(c.wifiCost) : 35, 
+                        tvCost: c.tvCost !== undefined && !isNaN(c.tvCost) ? Number(c.tvCost) : 15 
+                    }));
+                } catch(e) { 
+                    clients = []; 
+                }
+            }
+            
+            if (!stored || clients.length === 0) {
+                const today = new Date();
+                const day25 = new Date(); day25.setDate(today.getDate() - 25);
+                const day30 = new Date(); day30.setDate(today.getDate() - 30);
+                const day45 = new Date(); day45.setDate(today.getDate() - 45);
+                const f = d => d.toISOString().split('T')[0];
+                clients = [
+                    { id: 1, fullName: "Camila Negro", phone: "+54 911 2222-3333", dni: "40.123.456", startDate: "2024-07-10", wifiCost: 35, tvCost: 25, lastPayment: f(today) },
+                    { id: 2, fullName: "Roberto Rojas", phone: "11 5566-7788", dni: "31.234.567", startDate: "2024-09-01", wifiCost: 50, tvCost: 15, lastPayment: f(day25) },
+                    { id: 3, fullName: "Susana Méndez", phone: "+34 699 887-766", dni: "55.667.788", startDate: "2024-01-20", wifiCost: 25, tvCost: 0, lastPayment: f(day30) },
+                    { id: 4, fullName: "Javier Fernández", phone: "11 2233-4455", dni: "27.888.999", startDate: "2024-11-05", wifiCost: 35, tvCost: 25, lastPayment: f(day45) },
+                    { id: 5, fullName: "María González", phone: "11 3344-5566", dni: "33.445.566", startDate: "2024-10-15", wifiCost: 35, tvCost: 15, lastPayment: f(today) },
+                    { id: 6, fullName: "Carlos Rodríguez", phone: "11 4455-6677", dni: "34.556.677", startDate: "2024-08-20", wifiCost: 45, tvCost: 25, lastPayment: f(day25) },
+                    { id: 7, fullName: "Laura Fernández", phone: "11 5566-7788", dni: "35.667.788", startDate: "2024-06-10", wifiCost: 35, tvCost: 15, lastPayment: f(day30) },
+                    { id: 8, fullName: "Diego Martínez", phone: "11 6677-8899", dni: "36.778.899", startDate: "2024-09-25", wifiCost: 40, tvCost: 20, lastPayment: f(day45) },
+                    { id: 9, fullName: "Eduardo", phone: "11 8888-9999", dni: "37.889.900", startDate: "2024-12-01", wifiCost: 35, tvCost: 15, lastPayment: f(today) }
+                ];
+                saveToLocal();
+            }
+            
+            clients.forEach((c, idx) => c.id = idx + 1);
+            saveToLocal();
+        }
+
+        function checkForSync() {
+            const currentHash = localStorage.getItem('net12_data_hash');
+            const currentUpdate = parseInt(localStorage.getItem('net12_last_update') || '0');
+            
+            const timeSinceUpdate = Date.now() - currentUpdate;
+            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(navigator.userAgent);
+            
+            if (isMobile && timeSinceUpdate > 30000) {
+                document.getElementById('syncBar').style.display = 'flex';
+                syncNeeded = true;
+            } else {
+                document.getElementById('syncBar').style.display = 'none';
+                syncNeeded = false;
+            }
+        }
+
+        function performSync() {
+            const syncBtn = document.getElementById('syncBtn');
+            const originalText = syncBtn.innerHTML;
+            syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
+            syncBtn.disabled = true;
+
+            setTimeout(() => {
+                loadFromLocal();
+                applyFiltersAndRender();
+                updateDashboardStats();
+                
+                document.getElementById('syncBar').style.display = 'none';
+                syncNeeded = false;
+                
+                syncBtn.innerHTML = '<i class="fas fa-check-circle"></i> ¡Sincronizado!';
+                syncBtn.disabled = false;
+                
+                setTimeout(() => {
+                    syncBtn.innerHTML = originalText;
+                }, 2000);
+                
+                localStorage.setItem('net12_last_update', Date.now().toString());
+            }, 800);
+        }
+
+        // ============== FUNCIONES EXISTENTES ==============
 
         function loadHistory() {
             const stored = localStorage.getItem('net12_login_history');
@@ -915,6 +1127,9 @@
                 document.getElementById('loginContainer').style.display = 'none';
                 document.getElementById('dashboardWrapper').style.display = 'block';
                 loadFromLocal();
+                applyFiltersAndRender();
+                updateDashboardStats();
+                checkForSync();
             } else {
                 errorMsg.style.display = 'block';
                 errorMsg.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Usuario o contraseña incorrectos';
@@ -927,10 +1142,6 @@
             document.getElementById('dashboardWrapper').style.display = 'none';
             document.getElementById('loginUser').value = '';
             document.getElementById('loginPass').value = '';
-        }
-
-        function saveToLocal() { 
-            localStorage.setItem('net12_clientes', JSON.stringify(clients)); 
         }
         
         function getDaysSincePayment(lastPayStr) {
@@ -976,47 +1187,6 @@
             });
             document.getElementById('yellowCount').innerText = yellow;
             document.getElementById('redCount').innerText = red;
-        }
-
-        function loadFromLocal() {
-            const stored = localStorage.getItem('net12_clientes');
-            if (stored) {
-                try {
-                    clients = JSON.parse(stored);
-                    clients = clients.map((c, idx) => ({ 
-                        ...c, 
-                        id: c.id ? c.id : idx + 1,
-                        wifiCost: c.wifiCost !== undefined && !isNaN(c.wifiCost) ? Number(c.wifiCost) : 35, 
-                        tvCost: c.tvCost !== undefined && !isNaN(c.tvCost) ? Number(c.tvCost) : 15 
-                    }));
-                } catch(e) { 
-                    clients = []; 
-                }
-            }
-            
-            if (!stored || clients.length === 0) {
-                const today = new Date();
-                const day25 = new Date(); day25.setDate(today.getDate() - 25);
-                const day30 = new Date(); day30.setDate(today.getDate() - 30);
-                const day45 = new Date(); day45.setDate(today.getDate() - 45);
-                const f = d => d.toISOString().split('T')[0];
-                clients = [
-                    { id: 1, fullName: "Camila Negro", phone: "+54 911 2222-3333", dni: "40.123.456", startDate: "2024-07-10", wifiCost: 35, tvCost: 25, lastPayment: f(today) },
-                    { id: 2, fullName: "Roberto Rojas", phone: "11 5566-7788", dni: "31.234.567", startDate: "2024-09-01", wifiCost: 50, tvCost: 15, lastPayment: f(day25) },
-                    { id: 3, fullName: "Susana Méndez", phone: "+34 699 887-766", dni: "55.667.788", startDate: "2024-01-20", wifiCost: 25, tvCost: 0, lastPayment: f(day30) },
-                    { id: 4, fullName: "Javier Fernández", phone: "11 2233-4455", dni: "27.888.999", startDate: "2024-11-05", wifiCost: 35, tvCost: 25, lastPayment: f(day45) },
-                    { id: 5, fullName: "María González", phone: "11 3344-5566", dni: "33.445.566", startDate: "2024-10-15", wifiCost: 35, tvCost: 15, lastPayment: f(today) },
-                    { id: 6, fullName: "Carlos Rodríguez", phone: "11 4455-6677", dni: "34.556.677", startDate: "2024-08-20", wifiCost: 45, tvCost: 25, lastPayment: f(day25) },
-                    { id: 7, fullName: "Laura Fernández", phone: "11 5566-7788", dni: "35.667.788", startDate: "2024-06-10", wifiCost: 35, tvCost: 15, lastPayment: f(day30) },
-                    { id: 8, fullName: "Diego Martínez", phone: "11 6677-8899", dni: "36.778.899", startDate: "2024-09-25", wifiCost: 40, tvCost: 20, lastPayment: f(day45) }
-                ];
-                saveToLocal();
-            }
-            
-            clients.forEach((c, idx) => c.id = idx + 1);
-            saveToLocal();
-            applyFiltersAndRender();
-            updateDashboardStats();
         }
 
         function filterClients() {
@@ -1116,7 +1286,6 @@
                 const statusInfo = getPaymentStatusAndColor(days);
                 const total = (Number(client.wifiCost) + Number(client.tvCost)).toFixed(2);
                 
-                // Calcular antigüedad
                 let antiguedad = '—';
                 if (client.startDate) {
                     const start = new Date(client.startDate);
@@ -1253,6 +1422,7 @@
             document.getElementById('searchInput').addEventListener('input', applyFiltersAndRender);
             document.getElementById('statusFilter').addEventListener('change', applyFiltersAndRender);
             document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+            document.getElementById('syncBtn').addEventListener('click', performSync);
             document.getElementById('loginPass').addEventListener('keypress', (e) => { if (e.key === 'Enter') attemptLogin(); });
             document.getElementById('loginUser').addEventListener('keypress', (e) => { if (e.key === 'Enter') attemptLogin(); });
         });
