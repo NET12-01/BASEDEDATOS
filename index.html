@@ -38,7 +38,6 @@
             min-height: 100vh;
         }
 
-        /* Pantalla de Login */
         .login-container {
             position: fixed;
             top: 0;
@@ -161,7 +160,6 @@
             display: none;
         }
 
-        /* Dashboard */
         .dashboard-wrapper {
             display: none;
             width: 100%;
@@ -178,7 +176,6 @@
             overflow: hidden;
         }
 
-        /* Header mejorado */
         .header {
             background: linear-gradient(135deg, var(--secondary), #1a1a1a);
             padding: 1.5rem 2rem;
@@ -215,16 +212,15 @@
             margin-top: 5px;
         }
 
-        /* Sincronización */
         .sync-bar {
-            background: linear-gradient(135deg, #fef3c7, #fffbeb);
+            background: linear-gradient(135deg, #dbeafe, #eff6ff);
             padding: 0.8rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 0.5rem;
-            border-bottom: 2px solid var(--warning);
+            border-bottom: 2px solid #3b82f6;
         }
 
         .sync-bar .sync-message {
@@ -232,16 +228,16 @@
             align-items: center;
             gap: 8px;
             font-size: 0.85rem;
-            color: #92400e;
+            color: #1e40af;
         }
 
         .sync-bar .sync-message i {
             font-size: 1rem;
-            color: var(--warning);
+            color: #3b82f6;
         }
 
         .sync-btn {
-            background: var(--secondary);
+            background: #3b82f6;
             color: white;
             border: none;
             padding: 0.5rem 1.2rem;
@@ -298,7 +294,6 @@
             gap: 6px;
         }
 
-        /* Stats Cards */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -349,7 +344,6 @@
             font-weight: 600;
         }
 
-        /* Alertas mejoradas */
         .alerts-panel {
             margin: 1rem 2rem;
             display: grid;
@@ -412,7 +406,6 @@
             font-weight: 800;
         }
 
-        /* Formulario mejorado */
         .form-card {
             background: var(--gray-100);
             margin: 1rem 2rem;
@@ -520,7 +513,6 @@
             box-shadow: var(--shadow-md);
         }
 
-        /* Filtros */
         .filters-bar {
             margin: 0 2rem 1rem 2rem;
             display: flex;
@@ -578,7 +570,6 @@
             color: var(--primary);
         }
 
-        /* Tabla profesional */
         .table-wrapper {
             margin: 0 2rem 1.5rem 2rem;
             overflow-x: auto;
@@ -616,7 +607,6 @@
             background: linear-gradient(135deg, #fef9f0, #fff7f0);
         }
 
-        /* Celdas editables */
         .editable {
             cursor: pointer;
             transition: all 0.2s;
@@ -629,7 +619,6 @@
             background-color: #fff3e0;
         }
 
-        /* Estados profesionales */
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -710,7 +699,6 @@
             font-size: 0.75rem;
         }
 
-        /* Modal profesional */
         .modal {
             display: none;
             position: fixed;
@@ -780,7 +768,38 @@
             border-top: 1px solid var(--gray-200);
         }
 
-        /* Responsive */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .loading-overlay .spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .loading-overlay .spinner i {
+            font-size: 3rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
             .stats-grid, .alerts-panel {
                 margin: 1rem;
@@ -824,6 +843,13 @@
     </div>
 </div>
 
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner">
+        <i class="fas fa-spinner"></i>
+        <span>Cargando datos del servidor...</span>
+    </div>
+</div>
+
 <div id="dashboardWrapper" class="dashboard-wrapper">
     <div class="dashboard-container">
         <div class="header">
@@ -840,16 +866,17 @@
             </div>
         </div>
 
-        <!-- Barra de sincronización -->
-        <div id="syncBar" class="sync-bar" style="display: none;">
+        <div id="syncBar" class="sync-bar">
             <div class="sync-message">
-                <i class="fas fa-sync-alt fa-spin"></i>
-                <span>📱 Los datos no están sincronizados. Presiona el botón para actualizar desde el servidor.</span>
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span id="syncStatus">🌐 Modo local activo · Configurá Supabase para sincronizar</span>
             </div>
-            <button id="syncBtn" class="sync-btn"><i class="fas fa-cloud-download-alt"></i> Sincronizar Ahora</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="syncBtn" class="sync-btn"><i class="fas fa-sync-alt"></i> Refrescar</button>
+            <button id="migrateBtn" class="sync-btn" style="background:#10b981"><i class="fas fa-cloud-arrow-up"></i> Migrar local → nube</button>
+            </div>
         </div>
 
-        <!-- Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
@@ -946,7 +973,7 @@
             </table>
         </div>
         <div class="footer-note">
-            <i class="fas fa-mouse-pointer"></i> <strong>Doble clic</strong> para editar cualquier campo · Sistema profesional de gestión
+            <i class="fas fa-cloud"></i> <strong>Datos en la nube</strong> · Sincronización automática entre todos tus dispositivos · <i class="fas fa-mouse-pointer"></i> Doble clic para editar
         </div>
     </div>
 </div>
@@ -959,46 +986,125 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     (function() {
+        // ============================================================
+        // 🔴 CAMBIA ESTAS DOS LÍNEAS CON TUS DATOS DE SUPABASE 🔴
+        // ============================================================
+        const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';  // ← PEGÁ TU URL AQUÍ
+        const SUPABASE_KEY = 'TU-ANON-KEY-AQUI';                 // ← PEGÁ TU ANON KEY AQUÍ
+        // ============================================================
+
         const VALID_USER = "admin";
         const VALID_PASS = "net12";
         
         let clients = [];
         let loginHistory = [];
-        let syncNeeded = false;
-        let lastSyncTimestamp = 0;
+        let supabase = null;
 
-        // ============== FUNCIONES DE SINCRONIZACIÓN ==============
-        
-        function getDeviceId() {
-            let deviceId = localStorage.getItem('net12_device_id');
-            if (!deviceId) {
-                deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('net12_device_id', deviceId);
+        // ============== INICIALIZAR SUPABASE ==============
+        function initSupabase() {
+            try {
+                // Verificar que la librería está cargada
+                if (typeof supabaseJs === 'undefined') {
+                    console.error('❌ Librería Supabase no cargada');
+                    return null;
+                }
+                
+                if (SUPABASE_URL.includes('TU-PROYECTO')) {
+                    console.warn('⚠️ Configura SUPABASE_URL y SUPABASE_KEY en el código');
+                    return null;
+                }
+                
+                const { createClient } = supabaseJs;
+                return createClient(SUPABASE_URL, SUPABASE_KEY);
+            } catch(e) {
+                console.error('Error al inicializar Supabase:', e);
+                return null;
             }
-            return deviceId;
         }
 
-        function getDataHash(data) {
-            const str = JSON.stringify(data);
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                const char = str.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash;
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        // ============== FUNCIONES DE CARGA ==============
+        async function loadClientsFromCloud() {
+            if (!supabase) {
+                supabase = initSupabase();
+                if (!supabase) {
+                    // Si no hay Supabase, cargar datos locales
+                    loadFromLocal();
+                    return false;
+                }
             }
-            return hash.toString();
+
+            try {
+                showLoading();
+                const { data, error } = await supabase
+                    .from('clientes')
+                    .select('*')
+                    .order('id', { ascending: true });
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    clients = data.map(c => ({
+                        id: c.id,
+                        fullName: c.full_name || '',
+                        phone: c.phone || '',
+                        dni: c.dni || '',
+                        startDate: c.start_date || '',
+                        wifiCost: Number(c.wifi_cost) || 0,
+                        tvCost: Number(c.tv_cost) || 0,
+                        lastPayment: c.last_payment || ''
+                    }));
+                } else {
+                    // No hay datos en la nube, usar datos locales
+                    loadFromLocal();
+                    // Subir datos locales a la nube
+                    await uploadLocalDataToCloud();
+                }
+
+                hideLoading();
+                return true;
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                hideLoading();
+                // Fallback a datos locales
+                loadFromLocal();
+                return false;
+            }
         }
 
-        function saveToLocal() {
-            localStorage.setItem('net12_clientes', JSON.stringify(clients));
-            const dataHash = getDataHash(clients);
-            localStorage.setItem('net12_data_hash', dataHash);
-            localStorage.setItem('net12_last_update', Date.now().toString());
-            localStorage.setItem('net12_device_id', getDeviceId());
+        async function uploadLocalDataToCloud() {
+            if (!supabase || clients.length === 0) return;
+
+            try {
+                for (const c of clients) {
+                    await supabase.from('clientes').insert({
+                        full_name: c.fullName,
+                        phone: c.phone,
+                        dni: c.dni,
+                        start_date: c.startDate,
+                        wifi_cost: c.wifiCost,
+                        tv_cost: c.tvCost,
+                        last_payment: c.lastPayment
+                    });
+                }
+                // Recargar desde la nube
+                await loadClientsFromCloud();
+            } catch (e) {
+                console.error('Error subiendo datos:', e);
+            }
         }
 
+        // ============== FUNCIONES LOCALES (FALLBACK) ==============
         function loadFromLocal() {
             const stored = localStorage.getItem('net12_clientes');
             if (stored) {
@@ -1029,8 +1135,7 @@
                     { id: 5, fullName: "María González", phone: "11 3344-5566", dni: "33.445.566", startDate: "2024-10-15", wifiCost: 35, tvCost: 15, lastPayment: f(today) },
                     { id: 6, fullName: "Carlos Rodríguez", phone: "11 4455-6677", dni: "34.556.677", startDate: "2024-08-20", wifiCost: 45, tvCost: 25, lastPayment: f(day25) },
                     { id: 7, fullName: "Laura Fernández", phone: "11 5566-7788", dni: "35.667.788", startDate: "2024-06-10", wifiCost: 35, tvCost: 15, lastPayment: f(day30) },
-                    { id: 8, fullName: "Diego Martínez", phone: "11 6677-8899", dni: "36.778.899", startDate: "2024-09-25", wifiCost: 40, tvCost: 20, lastPayment: f(day45) },
-                    { id: 9, fullName: "Eduardo", phone: "11 8888-9999", dni: "37.889.900", startDate: "2024-12-01", wifiCost: 35, tvCost: 15, lastPayment: f(today) }
+                    { id: 8, fullName: "Diego Martínez", phone: "11 6677-8899", dni: "36.778.899", startDate: "2024-09-25", wifiCost: 40, tvCost: 20, lastPayment: f(day45) }
                 ];
                 saveToLocal();
             }
@@ -1039,45 +1144,147 @@
             saveToLocal();
         }
 
-        function checkForSync() {
-            const currentHash = localStorage.getItem('net12_data_hash');
-            const currentUpdate = parseInt(localStorage.getItem('net12_last_update') || '0');
-            
-            const timeSinceUpdate = Date.now() - currentUpdate;
-            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(navigator.userAgent);
-            
-            if (isMobile && timeSinceUpdate > 30000) {
-                document.getElementById('syncBar').style.display = 'flex';
-                syncNeeded = true;
-            } else {
-                document.getElementById('syncBar').style.display = 'none';
-                syncNeeded = false;
+        function saveToLocal() {
+            localStorage.setItem('net12_clientes', JSON.stringify(clients));
+        }
+
+        // ============== FUNCIONES CRUD EN LA NUBE ==============
+        async function addClientToCloud(client) {
+            if (!supabase) {
+                // Fallback a local
+                const newId = clients.length > 0 ? Math.max(...clients.map(c => c.id)) + 1 : 1;
+                clients.push({ ...client, id: newId });
+                saveToLocal();
+                applyFiltersAndRender();
+                updateDashboardStats();
+                return true;
+            }
+
+            try {
+                const { data, error } = await supabase
+                    .from('clientes')
+                    .insert({
+                        full_name: client.fullName,
+                        phone: client.phone,
+                        dni: client.dni,
+                        start_date: client.startDate,
+                        wifi_cost: client.wifiCost,
+                        tv_cost: client.tvCost,
+                        last_payment: client.lastPayment
+                    })
+                    .select();
+
+                if (error) throw error;
+                await loadClientsFromCloud();
+                applyFiltersAndRender();
+                updateDashboardStats();
+                return true;
+            } catch (error) {
+                console.error('Error agregando cliente:', error);
+                alert('⚠️ Error al guardar en el servidor. Verifica tu conexión.');
+                return false;
             }
         }
 
-        function performSync() {
-            const syncBtn = document.getElementById('syncBtn');
-            const originalText = syncBtn.innerHTML;
-            syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
-            syncBtn.disabled = true;
+        async function updateClientInCloud(clientId, field, value) {
+            if (!supabase) {
+                const client = clients.find(c => c.id === clientId);
+                if (client) {
+                    client[field] = value;
+                    saveToLocal();
+                    applyFiltersAndRender();
+                    updateDashboardStats();
+                }
+                return true;
+            }
 
-            setTimeout(() => {
-                loadFromLocal();
+            const fieldMap = {
+                fullName: 'full_name',
+                phone: 'phone',
+                dni: 'dni',
+                startDate: 'start_date',
+                lastPayment: 'last_payment'
+            };
+
+            const dbField = fieldMap[field] || field;
+            
+            try {
+                const { error } = await supabase
+                    .from('clientes')
+                    .update({ [dbField]: value })
+                    .eq('id', clientId);
+
+                if (error) throw error;
+                await loadClientsFromCloud();
                 applyFiltersAndRender();
                 updateDashboardStats();
-                
-                document.getElementById('syncBar').style.display = 'none';
-                syncNeeded = false;
-                
-                syncBtn.innerHTML = '<i class="fas fa-check-circle"></i> ¡Sincronizado!';
-                syncBtn.disabled = false;
-                
-                setTimeout(() => {
-                    syncBtn.innerHTML = originalText;
-                }, 2000);
-                
-                localStorage.setItem('net12_last_update', Date.now().toString());
-            }, 800);
+                return true;
+            } catch (error) {
+                console.error('Error actualizando cliente:', error);
+                alert('⚠️ Error al actualizar en el servidor');
+                return false;
+            }
+        }
+
+        async function updatePriceInCloud(clientId, type, value) {
+            if (!supabase) {
+                const client = clients.find(c => c.id === clientId);
+                if (client) {
+                    if (type === 'wifi') client.wifiCost = value;
+                    else client.tvCost = value;
+                    saveToLocal();
+                    applyFiltersAndRender();
+                    updateDashboardStats();
+                }
+                return true;
+            }
+
+            const field = type === 'wifi' ? 'wifi_cost' : 'tv_cost';
+            
+            try {
+                const { error } = await supabase
+                    .from('clientes')
+                    .update({ [field]: value })
+                    .eq('id', clientId);
+
+                if (error) throw error;
+                await loadClientsFromCloud();
+                applyFiltersAndRender();
+                updateDashboardStats();
+                return true;
+            } catch (error) {
+                console.error('Error actualizando precio:', error);
+                alert('⚠️ Error al actualizar en el servidor');
+                return false;
+            }
+        }
+
+        async function deleteClientFromCloud(clientId) {
+            if (!supabase) {
+                clients = clients.filter(c => c.id !== clientId);
+                clients.forEach((c, idx) => c.id = idx + 1);
+                saveToLocal();
+                applyFiltersAndRender();
+                updateDashboardStats();
+                return true;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('clientes')
+                    .delete()
+                    .eq('id', clientId);
+
+                if (error) throw error;
+                await loadClientsFromCloud();
+                applyFiltersAndRender();
+                updateDashboardStats();
+                return true;
+            } catch (error) {
+                console.error('Error eliminando cliente:', error);
+                alert('⚠️ Error al eliminar del servidor');
+                return false;
+            }
         }
 
         // ============== FUNCIONES EXISTENTES ==============
@@ -1117,7 +1324,7 @@
             document.getElementById('historyModal').style.display = 'none'; 
         }
 
-        function attemptLogin() {
+        async function attemptLogin() {
             const user = document.getElementById('loginUser').value.trim();
             const pass = document.getElementById('loginPass').value;
             const errorMsg = document.getElementById('errorMsg');
@@ -1126,10 +1333,19 @@
                 registerLogin();
                 document.getElementById('loginContainer').style.display = 'none';
                 document.getElementById('dashboardWrapper').style.display = 'block';
-                loadFromLocal();
+                
+                supabase = initSupabase();
+                const statusEl = document.getElementById('syncStatus');
+                if (supabase) {
+                    statusEl.innerHTML = '✅ Conectado a la nube · Datos sincronizados en todos los dispositivos';
+                    statusEl.parentElement.parentElement.style.background = 'linear-gradient(135deg, #d1fae5, #a7f3d0)';
+                } else {
+                    statusEl.innerHTML = '⚠️ Modo LOCAL · Los datos NO se comparten (configurá Supabase)';
+                    statusEl.parentElement.parentElement.style.background = 'linear-gradient(135deg, #fee2e2, #fecaca)';
+                }
+                await loadClientsFromCloud();
                 applyFiltersAndRender();
                 updateDashboardStats();
-                checkForSync();
             } else {
                 errorMsg.style.display = 'block';
                 errorMsg.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Usuario o contraseña incorrectos';
@@ -1230,16 +1446,10 @@
             element.appendChild(input);
             input.focus();
             
-            function save() {
+            async function save() {
                 const newValue = input.value.trim();
                 if (newValue && newValue !== currentValue) {
-                    const client = clients.find(c => c.id === clientId);
-                    if (client) {
-                        client[field] = newValue;
-                        saveToLocal();
-                        applyFiltersAndRender();
-                        updateDashboardStats();
-                    }
+                    await updateClientInCloud(clientId, field, newValue);
                 } else {
                     element.innerHTML = originalContent;
                 }
@@ -1252,18 +1462,14 @@
             });
         }
 
-        window.editPrice = function(clientId, type) {
+        window.editPrice = async function(clientId, type) {
             const client = clients.find(c => c.id === clientId);
             if (!client) return;
             const currentValue = type === 'wifi' ? client.wifiCost : client.tvCost;
             const newVal = prompt(`Editar ${type === 'wifi' ? 'WiFi' : 'TV'} ($):`, currentValue);
             if (newVal !== null && !isNaN(parseFloat(newVal)) && parseFloat(newVal) >= 0) {
                 const parsed = parseFloat(newVal);
-                if (type === 'wifi') client.wifiCost = parsed;
-                else client.tvCost = parsed;
-                saveToLocal();
-                applyFiltersAndRender();
-                updateDashboardStats();
+                await updatePriceInCloud(clientId, type, parsed);
             }
         }
 
@@ -1327,15 +1533,11 @@
             tbody.innerHTML = html;
             
             document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     const id = parseInt(btn.getAttribute('data-id'));
                     if (confirm('¿Eliminar este cliente permanentemente?')) {
-                        clients = clients.filter(c => c.id !== id);
-                        clients.forEach((c, idx) => c.id = idx + 1);
-                        saveToLocal();
-                        applyFiltersAndRender();
-                        updateDashboardStats();
+                        await deleteClientFromCloud(id);
                     }
                 });
             });
@@ -1346,7 +1548,7 @@
             renderTableFromArray(filtered);
         }
         
-        function addNewClient() {
+        async function addNewClient() {
             const fullName = document.getElementById('fullName').value.trim();
             const phone = document.getElementById('phone').value.trim();
             const dni = document.getElementById('dni').value.trim();
@@ -1365,31 +1567,29 @@
             if (wifiCost < 0) wifiCost = 0;
             if (tvCost < 0) tvCost = 0;
             
-            const newId = clients.length > 0 ? Math.max(...clients.map(c => c.id)) + 1 : 1;
-            clients.push({ 
-                id: newId, 
-                fullName: fullName, 
-                phone: phone, 
-                dni: dni, 
-                startDate: startDate, 
-                wifiCost: wifiCost, 
-                tvCost: tvCost, 
-                lastPayment: lastPayment 
-            });
-            saveToLocal();
-            applyFiltersAndRender();
-            updateDashboardStats();
+            const newClient = { 
+                fullName, 
+                phone, 
+                dni, 
+                startDate, 
+                wifiCost, 
+                tvCost, 
+                lastPayment 
+            };
             
-            document.getElementById('fullName').value = '';
-            document.getElementById('phone').value = '';
-            document.getElementById('dni').value = '';
-            document.getElementById('startDate').value = '';
-            document.getElementById('lastPayment').value = '';
-            
-            const btn = document.getElementById('addClientBtn');
-            const originalHtml = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-check-circle"></i> Cliente Guardado';
-            setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+            const success = await addClientToCloud(newClient);
+            if (success) {
+                document.getElementById('fullName').value = '';
+                document.getElementById('phone').value = '';
+                document.getElementById('dni').value = '';
+                document.getElementById('startDate').value = '';
+                document.getElementById('lastPayment').value = '';
+                
+                const btn = document.getElementById('addClientBtn');
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Cliente Guardado';
+                setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+            }
         }
         
         function clearFilters() {
@@ -1408,6 +1608,67 @@
             });
         }
         
+        
+        async function migrateLocalToCloud() {
+            if (!supabase) {
+                supabase = initSupabase();
+                if (!supabase) {
+                    alert('⚠️ Primero configurá SUPABASE_URL y SUPABASE_KEY en el código (líneas 992-993)');
+                    return;
+                }
+            }
+            const local = localStorage.getItem('net12_clientes');
+            if (!local) {
+                alert('No hay datos locales para migrar');
+                return;
+            }
+            const localClients = JSON.parse(local);
+            if (localClients.length === 0) {
+                alert('No hay clientes locales');
+                return;
+            }
+            if (!confirm(`¿Subir ${localClients.length} clientes locales a la nube?`)) return;
+            
+            showLoading();
+            let ok = 0;
+            for (const c of localClients) {
+                try {
+                    await supabase.from('clientes').insert({
+                        full_name: c.fullName,
+                        phone: c.phone,
+                        dni: c.dni,
+                        start_date: c.startDate,
+                        wifi_cost: c.wifiCost,
+                        tv_cost: c.tvCost,
+                        last_payment: c.lastPayment
+                    });
+                    ok++;
+                } catch(e) { console.error(e); }
+            }
+            hideLoading();
+            alert(`✅ Migrados ${ok} clientes. Ahora refrescá.`);
+            await refreshData();
+        }
+
+        async function refreshData() {
+            const btn = document.getElementById('syncBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
+            btn.disabled = true;
+            
+            supabase = initSupabase();
+            await loadClientsFromCloud();
+            applyFiltersAndRender();
+            updateDashboardStats();
+            
+            btn.innerHTML = '<i class="fas fa-check-circle"></i> ¡Actualizado!';
+            btn.disabled = false;
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+            }, 2000);
+        }
+        
         window.onclick = function(e) {
             const modal = document.getElementById('historyModal');
             if (e.target === modal) modal.style.display = 'none';
@@ -1415,6 +1676,7 @@
         
         document.addEventListener('DOMContentLoaded', () => {
             loadHistory();
+            
             document.getElementById('loginBtn').addEventListener('click', attemptLogin);
             document.getElementById('logoutBtn').addEventListener('click', logout);
             document.getElementById('historyBtn').addEventListener('click', () => window.showHistoryModal());
@@ -1422,7 +1684,8 @@
             document.getElementById('searchInput').addEventListener('input', applyFiltersAndRender);
             document.getElementById('statusFilter').addEventListener('change', applyFiltersAndRender);
             document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
-            document.getElementById('syncBtn').addEventListener('click', performSync);
+            document.getElementById('syncBtn').addEventListener('click', refreshData);
+            document.getElementById('migrateBtn').addEventListener('click', migrateLocalToCloud);
             document.getElementById('loginPass').addEventListener('keypress', (e) => { if (e.key === 'Enter') attemptLogin(); });
             document.getElementById('loginUser').addEventListener('keypress', (e) => { if (e.key === 'Enter') attemptLogin(); });
         });
